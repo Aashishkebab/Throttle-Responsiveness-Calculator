@@ -22,7 +22,7 @@ internal static class Program
     /// <summary>
     /// The Requested Torque headers in the <see cref="throttle"/> table.
     /// </summary>
-    static readonly float[] throttleRequestedTorqueHeaders = Array.ConvertAll(throttle[0].Split(','), float.Parse);
+    static readonly float[] throttleRequestedTorqueHeaders = Array.ConvertAll(throttle[0].Split(','), theValue => string.IsNullOrWhiteSpace(theValue) ? -1 : float.Parse(theValue));
 
     /// <summary>
     /// The RPMs in the throttle table.
@@ -43,37 +43,46 @@ internal static class Program
     static void Main(string[] args)
     {
         try {
-            boost = File.ReadAllLines("boost.csv");
-        }
-        catch(Exception) {
-            // Do nothing, let boost remain null
-        }
-
-        finalCalculation[0] = new float[accelerator[0].Split(',').Length];
-        for(int j = 1; j < finalCalculation.Length; j++) {
-            finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
-        }
-
-        for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
-            float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse);
-
-            float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
-
-            finalCalculation[i] = new float[torqueValuesAtRpm.Length];
-            finalCalculation[i][0] = rpm;
-
-            for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Starting at 1 to ignore the RPM column
-                finalCalculation[i][j] = rpm.LookupThrottlePlateOpeningAngle(torqueValuesAtRpm[j]);
+            try {
+                boost = File.ReadAllLines("boost.csv");
+            }
+            catch(Exception) {
+                // Do nothing, let boost remain null
             }
 
-            if(boost != null) { // Boost calculations are optional
-                for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Target Boost
-                    // TODO
+            finalCalculation[0] = new float[accelerator[0].Split(',').Length];
+            for(int j = 1; j < finalCalculation.Length; j++) {
+                finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
+            }
+
+            for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
+                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse);
+
+                float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
+
+                finalCalculation[i] = new float[torqueValuesAtRpm.Length];
+                finalCalculation[i][0] = rpm;
+
+                for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Starting at 1 to ignore the RPM column
+                    finalCalculation[i][j] = rpm.LookupThrottlePlateOpeningAngle(torqueValuesAtRpm[j]);
+                }
+
+                if(boost != null) { // Boost calculations are optional
+                    for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Target Boost
+                                                                        // TODO
+                    }
                 }
             }
+
+            File.WriteAllLines("sensitivity.csv", finalCalculation.Select(row => string.Join(",", row)));
+        }
+        catch(Exception exception) {
+            Console.WriteLine(exception.ToString());
+            Console.ReadLine();
         }
 
-        File.WriteAllLines("sensitivity.csv", finalCalculation.Select(row => string.Join(",", row)));
+        Console.WriteLine("Successfully wrote sensitivity.csv");
+        Console.ReadLine();
     }
 
     /// <summary>

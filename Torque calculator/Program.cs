@@ -43,38 +43,57 @@ internal static class Program
     static void Main(string[] args)
     {
         try {
-            try {
-                boost = File.ReadAllLines("boost.csv");
-            }
-            catch(Exception) {
-                // Do nothing, let boost remain null
-            }
+            //try {
+            //    boost = File.ReadAllLines("boost.csv");
+            //}
+            //catch(Exception) {
+            //    // Do nothing, let boost remain null
+            //}
 
-            finalCalculation[0] = new float[accelerator[0].Split(',').Length];
-            for(int j = 1; j < finalCalculation.Length; j++) {
-                finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
-            }
+            //finalCalculation[0] = new float[accelerator[0].Split(',').Length];
+            //for(int j = 1; j < finalCalculation.Length; j++) {
+            //    finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
+            //}
 
-            for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
-                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse);
+            //for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
+            //    float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse);
 
-                float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
+            //    float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
 
-                finalCalculation[i] = new float[torqueValuesAtRpm.Length];
-                finalCalculation[i][0] = rpm;
+            //    finalCalculation[i] = new float[torqueValuesAtRpm.Length];
+            //    finalCalculation[i][0] = rpm;
 
-                for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Starting at 1 to ignore the RPM column
-                    finalCalculation[i][j] = rpm.LookupThrottlePlateOpeningAngle(torqueValuesAtRpm[j]);
+            //    for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Starting at 1 to ignore the RPM column
+            //        finalCalculation[i][j] = rpm.LookupThrottlePlateOpeningAngle(torqueValuesAtRpm[j]);
+            //    }
+
+            //    if(boost != null) { // Boost calculations are optional
+            //        for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Target Boost
+            //            // TODO
+            //        }
+            //    }
+            //}
+
+            //File.WriteAllLines("sensitivity.csv", finalCalculation.Select(row => string.Join(",", row)));
+
+            string[] sensitivity = File.ReadAllLines("sensitivity.csv");
+            string[] newAccelerator = new string[sensitivity.Length];
+            newAccelerator[0] = accelerator[0]; // Copy headers
+
+            for(int i = 1; i < sensitivity.Length; i++) {
+                float[] row = Array.ConvertAll(sensitivity[i].Split(','), float.Parse);
+                float rpm = row[0];
+                float[] newRow = new float[row.Length];
+                newRow[0] = rpm;
+
+                for(int j = 1; j < row.Length; j++) {
+                    newRow[j] = rpm.ReverseLookupRequestedTorque(row[j]);
                 }
 
-                if(boost != null) { // Boost calculations are optional
-                    for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Target Boost
-                        // TODO
-                    }
-                }
+                newAccelerator[i] = string.Join(",", newRow);
             }
 
-            File.WriteAllLines("sensitivity.csv", finalCalculation.Select(row => string.Join(",", row)));
+            File.WriteAllLines("accelerator_new.csv", newAccelerator);
         }
         catch(Exception exception) {
             Console.WriteLine(exception.ToString());
@@ -169,5 +188,71 @@ internal static class Program
         }
 
         throw new Exception("Either the RPM or Requested Torque were greater than the allowed range.");
+    }
+
+    /// <summary>
+    /// Given a desired Throttle Plate Opening Angle at a specified RPM, determines
+    /// what Requested Torque value would produce that angle via the throttle table.
+    /// </summary>
+    public static float ReverseLookupRequestedTorque(this float rpm, float desiredThrottleAngle) {
+        // Find the RPM bracket
+        int rpmCeiling = -1;
+        for(int j = 1; j < throttleRpmList.Length; j++) {
+            if(throttleRpmList[j] >= rpm) {
+                rpmCeiling = j;
+                break;
+            }
+        }
+
+        if(rpmCeiling == -1) {
+            throw new Exception("RPM was greater than the allowed range.");
+        }
+
+        // Get the RPM interpolation factor
+        float rpmPercentage;
+        if(rpmCeiling == 1 || throttleRpmList[rpmCeiling] == throttleRpmList[rpmCeiling - 1]) {
+            rpmPercentage = 0;
+        }
+        else {
+            rpmPercentage = (rpm - throttleRpmList[rpmCeiling - 1]) / (float)(throttleRpmList[rpmCeiling] - throttleRpmList[rpmCeiling - 1]);
+        }
+
+        // Build the interpolated throttle angle row for this RPM
+        float[] ceilingRow = Array.ConvertAll(throttle[rpmCeiling].Split(','), float.Parse);
+        float[] floorRow;
+        if(rpmCeiling == 1) {
+            floorRow = ceilingRow;
+        }
+        else {
+            floorRow = Array.ConvertAll(throttle[rpmCeiling - 1].Split(','), float.Parse);
+        }
+
+        float[] interpolatedRow = new float[ceilingRow.Length];
+        for(int i = 1; i < ceilingRow.Length; i++) {
+            interpolatedRow[i] = floorRow[i] + (ceilingRow[i] - floorRow[i]) * rpmPercentage;
+        }
+
+        // Search the interpolated row for where desiredThrottleAngle falls
+        for(int i = 2; i < interpolatedRow.Length; i++) { // Starting at 2 because we need i-1 to be a valid throttle value
+            if(interpolatedRow[i] >= desiredThrottleAngle) {
+                float previousAngle = interpolatedRow[i - 1];
+                float nextAngle = interpolatedRow[i];
+                float gap = nextAngle - previousAngle;
+
+                float percentage;
+                if(gap == 0) {
+                    percentage = 0;
+                }
+                else {
+                    percentage = (desiredThrottleAngle - previousAngle) / gap;
+                }
+
+                float previousTorque = throttleRequestedTorqueHeaders[i - 1];
+                float nextTorque = throttleRequestedTorqueHeaders[i];
+                return previousTorque + (nextTorque - previousTorque) * percentage;
+            }
+        }
+
+        throw new Exception("Desired throttle angle was greater than the allowed range.");
     }
 }

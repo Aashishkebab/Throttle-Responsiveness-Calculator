@@ -70,9 +70,9 @@ internal static class Program
                 }
             }
 
-            File.WriteAllLines("desired_sensitivity.csv", finalCalculation.Select(row => string.Join("\t", row).Replace("-∞", "0")).Prepend("[Selection3D]"));
+            File.WriteAllLines("calculated_sensitivity.csv", finalCalculation.Select(row => string.Join("\t", row).Replace("-∞", "0")).Prepend("[Selection3D]"));
             
-            Console.WriteLine("Successfully wrote desired_sensitivity.csv");
+            Console.WriteLine("Successfully wrote calculated_sensitivity.csv");
             Console.WriteLine("Press ENTER to close.");
             Console.ReadLine();
         }

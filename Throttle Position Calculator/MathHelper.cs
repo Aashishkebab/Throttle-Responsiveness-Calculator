@@ -6,8 +6,8 @@ using System.Text;
 namespace Throttle_Position_Calculator;
 public static class MathHelper
 {
-    private const float TANH_DIVISOR = 55F;
-    private const float TANH_MULTIPLIER = 3.3F;
+    public const float TANH_DIVISOR = 55F;
+    public const float TANH_MULTIPLIER = 3.3F;
 
     /// <summary>
     /// Gets the Throttle Plate Opening Angle for a given <paramref name="yValue"/> at a specified <paramref name="rpm"/>.

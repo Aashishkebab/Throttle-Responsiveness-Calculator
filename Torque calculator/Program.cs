@@ -69,7 +69,7 @@ internal static class Program
 
                 if(boost != null) { // Boost calculations are optional
                     for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Target Boost
-                                                                        // TODO
+                        // TODO
                     }
                 }
             }
@@ -82,6 +82,7 @@ internal static class Program
         }
 
         Console.WriteLine("Successfully wrote sensitivity.csv");
+        Console.WriteLine("Press ENTER to close.");
         Console.ReadLine();
     }
 

@@ -49,6 +49,7 @@ internal static class Program
             // Do nothing, let boost remain null
         }
 
+        finalCalculation[0] = new float[accelerator[0].Split(',').Length];
         for(int j = 1; j < finalCalculation.Length; j++) {
             finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
         }

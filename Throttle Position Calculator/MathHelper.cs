@@ -111,5 +111,27 @@ public static class MathHelper
     public static bool IsAround(this float float1, float float2, float leeway = 0.5F) {
         return Math.Abs(float1 - float2) < leeway;
     }
+    
+    /// <summary>
+    /// Gets rid of empty (based on <c>.ToString</c>) and null elements and returns a new array.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    [Pure]
+    public static T[] RemoveEmpty<T>(this T[] array)
+    {
+        List<T> shortenedList = new List<T>();
+
+        for(int i = 0; i < array.Length; i++)
+        {
+            if(array[i]?.ToString()?.Length > 0)
+            {
+                shortenedList.Add(array[i]);
+            }
+        }
+
+        return shortenedList.ToArray();
+    }
 }
 

@@ -9,17 +9,17 @@ internal static class Program
     /// <summary>
     /// Table mapping Accelerator Pedal Angle at different RPMs to a Requested Torque value.
     /// </summary>
-    private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv");
+    private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv").RemoveEmpty();
 
     /// <summary>
     /// Table mapping Requested Torque at different RPMs to a Throttle Opening Angle.
     /// </summary>
-    private static readonly string[] throttle = File.ReadAllLines("throttle.csv");
+    private static readonly string[] throttle = File.ReadAllLines("throttle.csv").RemoveEmpty();
 
     /// <summary>
     /// Table mapping Throttle Opening Angle at different RPMs to Target Boost.
     /// </summary>
-    private static readonly string[] boost = File.ReadAllLines("boost.csv");
+    private static readonly string[] boost = File.ReadAllLines("boost.csv").RemoveEmpty();
 
     /// <summary>
     /// The final calculated "torque" in arbitrary units.
@@ -35,14 +35,14 @@ internal static class Program
     public static void Main(string[] args)
     {
         try {
-            finalCalculation[0] = new float[accelerator[0].Split(',').Length];
+            finalCalculation[0] = new float[accelerator[0].Split('\t').Length];
             for(int j = 1; j < finalCalculation[0].Length; j++) { // Pre-populate the finalCalculation headers
-                finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
+                finalCalculation[0][j] = float.Parse(accelerator[0].Split('\t')[j]);
             }
 
             float maxSensitivity = 0;
             for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
-                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
+                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split('\t'), float.Parse); // The current row
                 float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
 
                 finalCalculation[i] = new float[torqueValuesAtRpm.Length]; // Initialize the row in finalCalculation

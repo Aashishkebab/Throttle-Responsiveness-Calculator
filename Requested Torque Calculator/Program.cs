@@ -13,22 +13,22 @@ internal static class Program
     /// <remarks>
     /// Still required to get the headers.
     /// </remarks>
-    private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv");
+    private static readonly string[] accelerator = File.ReadAllLines("accelerator.txt").RemoveEmpty();
     
     /// <summary>
     /// Table mapping Accelerator Pedal Angle at different RPMs to an arbitrary torque value (sensitivity).
     /// </summary>
-    private static readonly string[] sensitivity = File.ReadAllLines("sensitivity.csv");
+    private static readonly string[] sensitivity = File.ReadAllLines("sensitivity.csv").RemoveEmpty();
 
     /// <summary>
     /// Table mapping Requested Torque at different RPMs to a Throttle Opening Angle.
     /// </summary>
-    private static readonly string[] throttle = File.ReadAllLines("throttle.csv");
+    private static readonly string[] throttle = File.ReadAllLines("throttle.txt").RemoveEmpty();
 
     /// <summary>
     /// Table mapping Throttle Opening Angle at different RPMs to Target Boost.
     /// </summary>
-    private static readonly string[] boost = File.ReadAllLines("boost.csv");
+    private static readonly string[] boost = File.ReadAllLines("boost.txt").RemoveEmpty();
     
     /// <summary>
     /// The final calculated "torque" in arbitrary units.
@@ -38,15 +38,15 @@ internal static class Program
     public static void Main(string[] args)
     {
         try {
-            finalCalculation[0] = new float[accelerator[0].Split(',').Length];
+            finalCalculation[0] = new float[accelerator[0].Split('\t').Length];
             for(int j = 1; j < finalCalculation[0].Length; j++) { // Pre-populate the finalCalculation headers
-                finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
+                finalCalculation[0][j] = float.Parse(accelerator[0].Split('\t')[j]);
             }
             
             float maxSensitivity = 1;
             for (int i = 1; i < accelerator.Length; i++)
             {
-                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
+                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split('\t'), float.Parse); // The current row
                 float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
                 
                 finalCalculation[i] = new float[torqueValuesAtRpm.Length]; // Initialize the row in finalCalculation
@@ -54,7 +54,7 @@ internal static class Program
                 
                 for (int j = 1; j < torqueValuesAtRpm; j++)
                 {
-                    float desiredSensitivity = float.Parse(sensitivity[i].Split(',')[j]);
+                    float desiredSensitivity = float.Parse(sensitivity[i].Split('\t')[j]);
                     float testValue = 0F;
                     while (!GetCalculatedValue(rpm, testValue, maxSensitivity).IsAround(desiredSensitivity)) {
                         testValue += 0.01F;

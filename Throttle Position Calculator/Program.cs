@@ -36,18 +36,17 @@ internal static class Program
     {
         try {
             finalCalculation[0] = new float[accelerator[0].Split(',').Length];
-            for(int j = 1; j < finalCalculation[0].Length; j++) {
+            for(int j = 1; j < finalCalculation[0].Length; j++) { // Pre-populate the finalCalculation headers
                 finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
             }
 
             float maxSensitivity = 0;
             for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
-                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse);
-
+                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
                 float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
 
-                finalCalculation[i] = new float[torqueValuesAtRpm.Length];
-                finalCalculation[i][0] = rpm;
+                finalCalculation[i] = new float[torqueValuesAtRpm.Length]; // Initialize the row in finalCalculation
+                finalCalculation[i][0] = rpm; // Set the first column to the RPM
 
                 for(int j = 1; j < finalCalculation[i].Length; j++) { // Starting at 1 to ignore the RPM column
                     finalCalculation[i][j] = throttle.LookupValueInTable(rpm, torqueValuesAtRpm[j]);
@@ -64,8 +63,7 @@ internal static class Program
             }
 
             // Normalize so that max sensitivity is 100
-            for (int i = 1; i < finalCalculation.Length; i++)
-            {
+            for (int i = 1; i < finalCalculation.Length; i++) {
                 for (int j = 1; j < finalCalculation[i].Length; j++)
                 {
                     finalCalculation[i][j] = (finalCalculation[i][j] / maxSensitivity) * 100;

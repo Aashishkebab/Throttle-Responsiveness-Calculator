@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Text;
 
 namespace Throttle_Position_Calculator;
@@ -7,7 +8,7 @@ public static class MathHelper
 {
     private const float TANH_DIVISOR = 55F;
     private const float TANH_MULTIPLIER = 3.3F;
-    
+
     /// <summary>
     /// Gets the Throttle Plate Opening Angle for a given <paramref name="yValue"/> at a specified <paramref name="rpm"/>.
     /// </summary>
@@ -15,6 +16,7 @@ public static class MathHelper
     /// <param name="values"></param>
     /// <param name="rpm"></param>
     /// <returns></returns>
+    [Pure]
     public static float LookupValueInTable(this string[] values, float rpm, float yValue) {
         float[] tableHeaders = Array.ConvertAll(values[0].Split(','), theValue => string.IsNullOrWhiteSpace(theValue) ? -1 : float.Parse(theValue));
         short[] rpmList = values.Select(line => short.Parse(string.IsNullOrWhiteSpace(line.Split(',')[0]) ? "-1" : line.Split(',')[0])).ToArray();
@@ -96,6 +98,18 @@ public static class MathHelper
         }
 
         throw new Exception("The fabric of spacetime is unraveling.");
+    }
+
+    /// <summary>
+    /// Checks whether two <see cref="float"/> values are within a certain <paramref name="leeway"/> of each other.
+    /// </summary>
+    /// <param name="float1"></param>
+    /// <param name="float2"></param>
+    /// <param name="leeway"></param>
+    /// <returns></returns>
+    [Pure]
+    public static bool IsAround(this float float1, float float2, float leeway = 0.5F) {
+        return Math.Abs(float1 - float2) < leeway;
     }
 }
 

@@ -4,25 +4,28 @@ namespace Throttle_Position_Calculator;
 
 internal static class Program
 {
+    private const float TANH_DIVISOR = 55F;
+    private const float TANH_MULTIPLIER = 3.3F;
+    
     /// <summary>
     /// Table mapping Accelerator Pedal Angle at different RPMs to a Requested Torque value.
     /// </summary>
-    static readonly string[] accelerator = File.ReadAllLines("accelerator.csv");
+    private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv");
 
     /// <summary>
     /// Table mapping Requested Torque at different RPMs to a Throttle Opening Angle.
     /// </summary>
-    static readonly string[] throttle = File.ReadAllLines("throttle.csv");
+    private static readonly string[] throttle = File.ReadAllLines("throttle.csv");
 
     /// <summary>
     /// Table mapping Throttle Opening Angle at different RPMs to Target Boost.
     /// </summary>
-    static string[]? boost;
+    private static string[]? boost;
 
     /// <summary>
     /// The final calculated "torque" in arbitrary units.
     /// </summary>
-    static float[][] finalCalculation = new float[accelerator.Length][];
+    private static readonly float[][] finalCalculation = new float[accelerator.Length][];
 
     /// <summary>
     /// There are several assumptions made about the format of the data.
@@ -59,12 +62,12 @@ internal static class Program
 
                 if(boost != null) { // Boost calculations are optional
                     for(int j = 1; j < finalCalculation[i].Length; j++) { // Target Boost
-                        finalCalculation[i][j] += finalCalculation[i][j] * (boost.LookupValueInTable(rpm, finalCalculation[i][j]) / 14.7); // Divide by 14.7 to get a multiplier related to atmospheric pressure
+                        finalCalculation[i][j] += finalCalculation[i][j] * ((float)Math.Tanh((boost.LookupValueInTable(rpm, finalCalculation[i][j]) / TANH_DIVISOR)) * (float)TANH_MULTIPLIER); // Divide by 14.7 to get a multiplier related to atmospheric pressure
                     }
                 }
             }
 
-            File.WriteAllLines("sensitivity.csv", finalCalculation.Select(row => string.Join("\t", row)));
+            File.WriteAllLines("sensitivity.csv", finalCalculation.Select(row => string.Join("\t", row).Replace("-∞", "0")));
             
             Console.WriteLine("Successfully wrote sensitivity.csv");
             Console.WriteLine("Press ENTER to close.");
@@ -88,9 +91,9 @@ internal static class Program
         short[] rpmList = values.Select(line => short.Parse(string.IsNullOrWhiteSpace(line.Split(',')[0]) ? "-1" : line.Split(',')[0])).ToArray();
         
         for(int i = 1; i < rpmList.Length; i++) {
-            if(rpmList[i] >= rpm) { // We have found the matching y columns
+            if(rpmList[i] >= rpm || i == rpmList.Length - 1) { // We have found the matching y columns
                 for(int j = 1; j < tableHeaders.Length; j++) { // Starting at 1 to ignore the blank column
-                    if(tableHeaders[j] >= yValue) { // We have found the matching x columns
+                    if(tableHeaders[j] >= yValue || j == tableHeaders.Length - 1) { // We have found the matching x columns
                         // Get the four values
                         float rpmCeilingValueCeiling = float.Parse(values[i].Split(',')[j]);
                         
@@ -123,46 +126,46 @@ internal static class Program
                         else {
                             rpmFloorValueFloor = float.Parse(values[i - 1].Split(',')[j - 1]);
                         }
-                        
+
                         // Get the percentage change in RPM from closest floor
-                        float distanceFromPreviousRpm = rpm - rpmList[i - 1];
+                        float distanceFromRpmCeiling = rpmList[i] - rpm;
                         float totalRpmGap = rpmList[i] - rpmList[i - 1];
 
-                        float rpmPercentageChangeFromPrevious;
-                        if(totalRpmGap == 0) {
-                            rpmPercentageChangeFromPrevious = 0;
+                        float rpmPercentageChangeFromCeiling;
+                        if(totalRpmGap == 0 || (i == rpmList.Length - 1 && rpm > rpmList[i])) {
+                            rpmPercentageChangeFromCeiling = 0;
                         }
                         else {
-                            rpmPercentageChangeFromPrevious = distanceFromPreviousRpm / totalRpmGap;
+                            rpmPercentageChangeFromCeiling = distanceFromRpmCeiling / totalRpmGap;
                         }
 
-                        // Get the percentage change in Requested Torque from closest floor
-                        float distanceFromPreviousValue = yValue - tableHeaders[j - 1];
+                        // Get the percentage change in yValue from closest floor in the table
+                        float distanceFromCeilingValue = tableHeaders[j] - yValue;
                         float totalValueGap = tableHeaders[j] - tableHeaders[j - 1];
 
-                        float valuePercentageChangeFromPrevious;
-                        if(totalValueGap == 0) {
-                            valuePercentageChangeFromPrevious = 0;
+                        float valuePercentageChangeFromCeiling;
+                        if(totalValueGap == 0 || (j == tableHeaders.Length - 1 && yValue > tableHeaders[j])) {
+                            valuePercentageChangeFromCeiling = 0;
                         }
                         else {
-                            valuePercentageChangeFromPrevious = distanceFromPreviousValue / totalValueGap;
+                            valuePercentageChangeFromCeiling = distanceFromCeilingValue / totalValueGap;
                         }
 
                         // Calculate the interpolated throttle position using the RPM ceiling
                         float rpmCeilingFinalValueGap = rpmCeilingValueCeiling - rpmCeilingValueFloor;
-                        float rpmCeilingFinalValue = rpmCeilingValueFloor + (rpmCeilingFinalValueGap * valuePercentageChangeFromPrevious);
+                        float rpmCeilingFinalValue = rpmCeilingValueCeiling - (rpmCeilingFinalValueGap * valuePercentageChangeFromCeiling);
 
                         // Calculate the interpolated throttle position using the RPM floor
                         float rpmFloorFinalValueGap = rpmFloorValueCeiling - rpmFloorValueFloor;
-                        float rpmFloorFinalValue = rpmFloorValueFloor + (rpmFloorFinalValueGap * valuePercentageChangeFromPrevious);
+                        float rpmFloorFinalValue = rpmFloorValueCeiling - (rpmFloorFinalValueGap * valuePercentageChangeFromCeiling);
 
                         // Calculate the final interpolated throttle position using the two RPM-based values
-                        return rpmFloorFinalValue + (rpmCeilingFinalValue - rpmFloorFinalValue) * rpmPercentageChangeFromPrevious;
+                        return rpmCeilingFinalValue - ((rpmCeilingFinalValue - rpmFloorFinalValue) * rpmPercentageChangeFromCeiling);
                     }
                 }
             }
         }
 
-        throw new Exception("Either the RPM or value were greater than the allowed range.");
+        throw new Exception("The fabric of spacetime is unraveling.");
     }
 }

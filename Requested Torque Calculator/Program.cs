@@ -56,15 +56,25 @@ internal static class Program
                 {
                     float desiredSensitivity = float.Parse(sensitivity[i].Split('\t')[j]);
                     float testValue = 0F;
-                    while (!GetCalculatedValue(rpm, testValue, maxSensitivity).IsAround(desiredSensitivity) && testValue < MAX_REQUESTED_TORQUE) {
+                    while (!GetCalculatedValue(rpm, testValue).IsAround(desiredSensitivity) && testValue < MAX_REQUESTED_TORQUE) {
                         testValue += 0.01F;
                     }
                     
                     finalCalculation[i][j] = testValue;
-                    if (testValue > maxSensitivity)
+                    Console.WriteLine($"Calculated value {testValue} for RPM {rpm}");
+                    
+                    if (finalCalculation[i][j] > maxSensitivity)
                     {
-                        maxSensitivity = testValue;
+                        maxSensitivity = finalCalculation[i][j];
                     }
+                }
+            }
+            
+            // Normalize so that max sensitivity is 100
+            for (int i = 1; i < finalCalculation.Length; i++) {
+                for (int j = 1; j < finalCalculation[i].Length; j++)
+                {
+                    finalCalculation[i][j] = (finalCalculation[i][j] / maxSensitivity) * 100;
                 }
             }
 
@@ -85,16 +95,15 @@ internal static class Program
     /// </summary>
     /// <param name="rpm"></param>
     /// <param name="requestedTorque"></param>
-    /// <param name="maxSensitivity"></param>
     /// <returns></returns>
     [Pure]
-    private static float GetCalculatedValue(float rpm, float requestedTorque, float maxSensitivity)
+    private static float GetCalculatedValue(float rpm, float requestedTorque)
     {
         float finalCalculation;
         finalCalculation = throttle.LookupValueInTable(rpm, requestedTorque);
         finalCalculation += finalCalculation * ((float)Math.Tanh((boost.LookupValueInTable(rpm, finalCalculation) / TANH_DIVISOR)) * (float)TANH_MULTIPLIER); // Divide by 14.7 to get a multiplier related to atmospheric pressure
 
-        return (finalCalculation / maxSensitivity) * 100;
+        return finalCalculation;
     }
 }
 

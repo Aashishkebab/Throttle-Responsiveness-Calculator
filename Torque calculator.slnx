@@ -1,3 +1,4 @@
 <Solution>
-  <Project Path="Torque calculator/Torque calculator.csproj" />
+  <Project Path="Requested Torque Calculator/Requested Torque Calculator.csproj" Id="e9818c10-f7a2-469c-a1ec-de99b55becaa" />
+  <Project Path="Throttle Position Calculator/Throttle Position Calculator.csproj" />
 </Solution>

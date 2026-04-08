@@ -56,7 +56,7 @@ internal static class Program
                 {
                     float desiredSensitivity = float.Parse(sensitivity[i].Split('\t')[j]);
                     float testValue = 0F;
-                    while (!GetCalculatedValue(rpm, testValue, maxSensitivity).IsAround(desiredSensitivity)) {
+                    while (!GetCalculatedValue(rpm, testValue, maxSensitivity).IsAround(desiredSensitivity) && testValue < 320) {
                         testValue += 0.01F;
                     }
                     

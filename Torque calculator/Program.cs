@@ -105,12 +105,26 @@ internal static class Program
                         // Get the percentage change in Requested Torque from closest floor
                         float distanceFromPreviousTorque = requestedTorque - throttleRequestedTorqueHeaders[i - 1];
                         float totalTorqueGap = throttleRequestedTorqueHeaders[i] - throttleRequestedTorqueHeaders[i - 1];
-                        float torquePercentageChangeFromPrevious = distanceFromPreviousTorque / totalTorqueGap;
+
+                        float torquePercentageChangeFromPrevious;
+                        if(totalTorqueGap == 0) {
+                            torquePercentageChangeFromPrevious = 0;
+                        }
+                        else {
+                            torquePercentageChangeFromPrevious = distanceFromPreviousTorque / totalTorqueGap;
+                        }
 
                         // Get the percentage change in RPM from closest floor
                         float distanceFromPreviousRpm = rpm - throttleRpmList[j - 1];
                         float totalRpmGap = throttleRpmList[j] - throttleRpmList[j - 1];
-                        float rpmPercentageChangeFromPrevious = distanceFromPreviousRpm / totalRpmGap;
+
+                        float rpmPercentageChangeFromPrevious;
+                        if(totalRpmGap == 0) {
+                            rpmPercentageChangeFromPrevious = 0;
+                        }
+                        else {
+                            rpmPercentageChangeFromPrevious = distanceFromPreviousRpm / totalRpmGap;
+                        }
 
                         // Calculate the interpolated throttle position using the RPM ceiling
                         float nextRpmthrottlePositionGap = nextRpmNextTorque - nextRpmPreviousTorque;

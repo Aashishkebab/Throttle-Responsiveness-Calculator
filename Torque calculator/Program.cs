@@ -32,7 +32,7 @@ internal static class Program
     /// <summary>
     /// The final calculated "torque" in arbitrary units.
     /// </summary>
-    static float[] finalCalculation = new float[accelerator.Length];
+    static float[][] finalCalculation = new float[accelerator.Length][];
 
     /// <summary>
     /// There are several assumptions made about the format of the data.
@@ -49,12 +49,24 @@ internal static class Program
             // Do nothing, let boost remain null
         }
 
-        for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
-            float[] valuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse);
-            float rpm = valuesAtRpm[0];
+        for(int j = 1; j < finalCalculation.Length; j++) {
+            finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
+        }
 
-            for(int j = 1; j < valuesAtRpm.Length; j++) { // Starting at 1 to ignore the RPM column
-                finalCalculation[i] = valuesAtRpm[j].LookupThrottlePlateOpeningAngle(rpm);
+        for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
+            float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse);
+
+            float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
+
+            finalCalculation[i] = new float[torqueValuesAtRpm.Length];
+            finalCalculation[i][0] = rpm;
+
+            for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Starting at 1 to ignore the RPM column
+                finalCalculation[i][j] = rpm.LookupThrottlePlateOpeningAngle(torqueValuesAtRpm[j]);
+            }
+
+            for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Target Boost
+                // TODO
             }
         }
     }
@@ -65,7 +77,7 @@ internal static class Program
     /// <param name="requestedTorque"></param>
     /// <param name="rpm"></param>
     /// <returns></returns>
-    public static float LookupThrottlePlateOpeningAngle(this float requestedTorque, float rpm) {
+    public static float LookupThrottlePlateOpeningAngle(this float rpm, float requestedTorque) {
         for(int i = 1; i < throttleRequestedTorqueHeaders.Length; i++) { // Starting at 1 to ignore the blank column
             if(throttleRequestedTorqueHeaders[i] >= requestedTorque) { // We have found the Requested Torque area
                 for(int j = 1; j < throttleRpmList.Length; j++) {

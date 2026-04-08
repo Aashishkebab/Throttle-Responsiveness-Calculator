@@ -66,10 +66,14 @@ internal static class Program
                 finalCalculation[i][j] = rpm.LookupThrottlePlateOpeningAngle(torqueValuesAtRpm[j]);
             }
 
-            for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Target Boost
-                // TODO
+            if(boost != null) { // Boost calculations are optional
+                for(int j = 1; j < torqueValuesAtRpm.Length; j++) { // Target Boost
+                    // TODO
+                }
             }
         }
+
+        File.WriteAllLines("sensitivity.csv", finalCalculation.Select(row => string.Join(",", row)));
     }
 
     /// <summary>

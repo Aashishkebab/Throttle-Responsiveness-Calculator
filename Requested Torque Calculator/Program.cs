@@ -52,11 +52,11 @@ internal static class Program
                 finalCalculation[i] = new float[torqueValuesAtRpm.Length]; // Initialize the row in finalCalculation
                 finalCalculation[i][0] = rpm; // Set the first column to the RPM
                 
-                for (int j = 1; j < torqueValuesAtRpm; j++)
+                for (int j = 1; j < torqueValuesAtRpm[i]; j++)
                 {
                     float desiredSensitivity = float.Parse(sensitivity[i].Split('\t')[j]);
                     float testValue = 0F;
-                    while (!GetCalculatedValue(rpm, testValue, maxSensitivity).IsAround(desiredSensitivity) && testValue < 320) {
+                    while (!GetCalculatedValue(rpm, testValue, maxSensitivity).IsAround(desiredSensitivity) && testValue < MAX_REQUESTED_TORQUE) {
                         testValue += 0.01F;
                     }
                     

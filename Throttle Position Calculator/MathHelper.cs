@@ -8,6 +8,7 @@ public static class MathHelper
 {
     public const float TANH_DIVISOR = 55F;
     public const float TANH_MULTIPLIER = 3.3F;
+    public const float MAX_REQUESTED_TORQUE = 320F;
 
     /// <summary>
     /// Gets the Throttle Plate Opening Angle for a given <paramref name="yValue"/> at a specified <paramref name="rpm"/>.

@@ -8,4 +8,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Throttle Position Calculator\Throttle Position Calculator.csproj" />
+  </ItemGroup>
+
 </Project>

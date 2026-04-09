@@ -42,15 +42,24 @@ internal static class Program
                 finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
             }
 
+            // Get the max sensitivity to un-normalize (weirdize?)
+            float maxSensitivity = 0;
+            for(int i = 1; i < finalCalculation.Length; i++) {
+                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
+                float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
+
+                float rowMaxSensitivity = GetCalculatedValue(rpm, MAX_REQUESTED_TORQUE); // Calculate maximum possible value for the RPM
+                if(rowMaxSensitivity > maxSensitivity) {
+                    maxSensitivity = rowMaxSensitivity;
+                }
+            }
+
             for (int i = 1; i < accelerator.Length; i++) {
                 float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
                 float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
                 
                 finalCalculation[i] = new float[torqueValuesAtRpm.Length]; // Initialize the row in finalCalculation
                 finalCalculation[i][0] = rpm; // Set the first column to the RPM
-
-                // Get the max sensitivity to un-normalize (weirdize?)
-                float maxSensitivity = GetCalculatedValue(rpm, MAX_REQUESTED_TORQUE); // Calculate maximum possible value for the RPM
 
                 for (int j = 1; j < torqueValuesAtRpm.Length; j++) {
                     float desiredSensitivity = float.Parse(sensitivity[i].Split(',')[j]);

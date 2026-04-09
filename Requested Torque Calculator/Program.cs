@@ -68,7 +68,7 @@ internal static class Program
                         testValue += 0.01F;
                     }
 
-                    if(testValue.IsAround(MAX_REQUESTED_TORQUE, 1)) {
+                    if(testValue.IsAround(MAX_REQUESTED_TORQUE, 1.5F)) {
                         testValue = MAX_REQUESTED_TORQUE;
                     }
                     finalCalculation[i][j] = testValue;
@@ -76,9 +76,10 @@ internal static class Program
                 }
             }
 
-            File.WriteAllLines("desired_acceleration.txt", finalCalculation.Select(row => string.Join("\t", row).Replace("-∞", "0")).Prepend("[Selection3D]"));
-            
-            Console.WriteLine("Successfully wrote desired_acceleration.txt");
+            File.WriteAllLines("desired_acceleration.csv", finalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")));
+            File.WriteAllLines("desired_acceleration.txt", finalCalculation.Skip(1).Select(row => string.Join("\t", row.Skip(1)).Replace("-∞", "0")).Prepend("[Selection3D]"));
+
+            Console.WriteLine("Successfully wrote desired_acceleration.csv and desired_acceleration.txt");
             Console.WriteLine("Press ENTER to close.");
             Console.ReadLine();
         }

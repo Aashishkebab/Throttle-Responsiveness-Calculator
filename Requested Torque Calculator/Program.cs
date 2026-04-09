@@ -41,26 +41,17 @@ internal static class Program
             for(int j = 1; j < finalCalculation[0].Length; j++) { // Pre-populate the finalCalculation headers
                 finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
             }
-            
-            // Get the max sensitivity to un-normalize (weirdize?)
-            float maxSensitivity = 0;
-            for (int i = 1; i < finalCalculation.Length; i++) {
-                float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
-                float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
-                
-                float rowMaxSensitivity = GetCalculatedValue(rpm, MAX_REQUESTED_TORQUE); // Calculate maximum possible value for the RPM
-                if(rowMaxSensitivity > maxSensitivity) {
-                    maxSensitivity = rowMaxSensitivity;
-                }
-            }
-            
+
             for (int i = 1; i < accelerator.Length; i++) {
                 float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
                 float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
                 
                 finalCalculation[i] = new float[torqueValuesAtRpm.Length]; // Initialize the row in finalCalculation
                 finalCalculation[i][0] = rpm; // Set the first column to the RPM
-                
+
+                // Get the max sensitivity to un-normalize (weirdize?)
+                float maxSensitivity = GetCalculatedValue(rpm, MAX_REQUESTED_TORQUE); // Calculate maximum possible value for the RPM
+
                 for (int j = 1; j < torqueValuesAtRpm.Length; j++) {
                     float desiredSensitivity = float.Parse(sensitivity[i].Split(',')[j]);
                     float testValue = 0F;
@@ -68,7 +59,7 @@ internal static class Program
                         testValue += 0.01F;
                     }
 
-                    if(testValue.IsAround(MAX_REQUESTED_TORQUE, 1)) {
+                    if(testValue.IsAround(MAX_REQUESTED_TORQUE, 1.5F)) {
                         testValue = MAX_REQUESTED_TORQUE;
                     }
                     finalCalculation[i][j] = testValue;
@@ -76,9 +67,10 @@ internal static class Program
                 }
             }
 
-            File.WriteAllLines("desired_acceleration.txt", finalCalculation.Select(row => string.Join("\t", row).Replace("-∞", "0")).Prepend("[Selection3D]"));
-            
-            Console.WriteLine("Successfully wrote desired_acceleration.txt");
+            File.WriteAllLines("desired_acceleration.csv", finalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")));
+            File.WriteAllLines("desired_acceleration.txt", finalCalculation.Skip(1).Select(row => string.Join("\t", row.Skip(1)).Replace("-∞", "0")).Prepend("[Selection3D]"));
+
+            Console.WriteLine("Successfully wrote desired_acceleration.csv and desired_acceleration.txt");
             Console.WriteLine("Press ENTER to close.");
             Console.ReadLine();
         }

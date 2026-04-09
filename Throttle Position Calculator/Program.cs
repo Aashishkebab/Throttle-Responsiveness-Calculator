@@ -7,17 +7,17 @@ internal static class Program
     /// <summary>
     /// Table mapping Accelerator Pedal Angle at different RPMs to a Requested Torque value.
     /// </summary>
-    private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv").RemoveRomRaiderNonsense().RemoveEmpty();
+    private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv").RemoveEmpty();
 
     /// <summary>
     /// Table mapping Requested Torque at different RPMs to a Throttle Opening Angle.
     /// </summary>
-    private static readonly string[] throttle = File.ReadAllLines("throttle.csv").RemoveRomRaiderNonsense().RemoveEmpty();
+    private static readonly string[] throttle = File.ReadAllLines("throttle.csv").RemoveEmpty();
 
     /// <summary>
     /// Table mapping Throttle Opening Angle at different RPMs to Target Boost.
     /// </summary>
-    private static readonly string[] boost = File.ReadAllLines("boost.csv").RemoveRomRaiderNonsense().RemoveEmpty();
+    private static readonly string[] boost = File.ReadAllLines("boost.csv").RemoveEmpty();
 
     /// <summary>
     /// The final calculated "torque" in arbitrary units.

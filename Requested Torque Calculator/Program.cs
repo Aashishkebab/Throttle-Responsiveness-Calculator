@@ -13,7 +13,7 @@ internal static class Program
     /// <remarks>
     /// Still required to get the headers.
     /// </remarks>
-    private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv").RemoveRomRaiderNonsense().RemoveEmpty();
+    private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv").RemoveEmpty();
     
     /// <summary>
     /// Table mapping Accelerator Pedal Angle at different RPMs to an arbitrary torque value (sensitivity).
@@ -23,12 +23,12 @@ internal static class Program
     /// <summary>
     /// Table mapping Requested Torque at different RPMs to a Throttle Opening Angle.
     /// </summary>
-    private static readonly string[] throttle = File.ReadAllLines("throttle.csv").RemoveRomRaiderNonsense().RemoveEmpty();
+    private static readonly string[] throttle = File.ReadAllLines("throttle.csv").RemoveEmpty();
 
     /// <summary>
     /// Table mapping Throttle Opening Angle at different RPMs to Target Boost.
     /// </summary>
-    private static readonly string[] boost = File.ReadAllLines("boost.csv").RemoveRomRaiderNonsense().RemoveEmpty();
+    private static readonly string[] boost = File.ReadAllLines("boost.csv").RemoveEmpty();
     
     /// <summary>
     /// The final calculated "torque" in arbitrary units.
@@ -76,9 +76,9 @@ internal static class Program
                 }
             }
 
-            File.WriteAllLines("desired_acceleration.txt", finalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")).Prepend("[Selection3D]"));
+            File.WriteAllLines("desired_acceleration.csv", finalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")).Prepend("[Selection3D]"));
             
-            Console.WriteLine("Successfully wrote desired_acceleration.txt");
+            Console.WriteLine("Successfully wrote desired_acceleration.csv");
             Console.WriteLine("Press ENTER to close.");
             Console.ReadLine();
         }

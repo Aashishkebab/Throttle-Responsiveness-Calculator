@@ -6,8 +6,8 @@ using System.Text;
 namespace Throttle_Position_Calculator;
 public static class MathHelper
 {
-    public const float TANH_DIVISOR = 15F;
-    public const float TANH_MULTIPLIER = 1.2F;
+    public const float TANH_DIVISOR = 33F;
+    public const float TANH_MULTIPLIER = 2.2F;
     public const float MAX_REQUESTED_TORQUE = 320F;
 
     /// <summary>

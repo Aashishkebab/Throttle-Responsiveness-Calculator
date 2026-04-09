@@ -76,9 +76,9 @@ internal static class Program
                 }
             }
 
-            File.WriteAllLines("desired_acceleration.csv", finalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")).Prepend("[Selection3D]"));
+            File.WriteAllLines("desired_acceleration.txt", finalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")).Prepend("[Selection3D]"));
             
-            Console.WriteLine("Successfully wrote desired_acceleration.csv");
+            Console.WriteLine("Successfully wrote desired_acceleration.txt");
             Console.WriteLine("Press ENTER to close.");
             Console.ReadLine();
         }

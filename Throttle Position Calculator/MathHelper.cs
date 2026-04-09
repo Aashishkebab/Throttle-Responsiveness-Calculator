@@ -20,7 +20,7 @@ public static class MathHelper
     [Pure]
     public static float LookupValueInTable(this string[] values, float rpm, float yValue) {
         float[] tableHeaders = Array.ConvertAll(values[0].Split(','), theValue => string.IsNullOrWhiteSpace(theValue) ? -1 : float.Parse(theValue));
-        short[] rpmList = values.Select(line => short.Parse(string.IsNullOrWhiteSpace(line.Split(',')[0]) ? "-1" : line.Split(',')[0])).ToArray();
+        float[] rpmList = values.Select(line => float.Parse(string.IsNullOrWhiteSpace(line.Split(',')[0]) ? "-1" : line.Split(',')[0])).ToArray();
         
         for(int i = 1; i < rpmList.Length; i++) {
             if(rpmList[i] >= rpm || i == rpmList.Length - 1) { // We have found the matching y columns
@@ -122,12 +122,33 @@ public static class MathHelper
     [Pure]
     public static T[] RemoveEmpty<T>(this T[] array)
     {
-        List<T> shortenedList = new List<T>();
+        List<T> shortenedList = [];
 
         for(int i = 0; i < array.Length; i++)
         {
             if(array[i]?.ToString()?.Length > 0)
             {
+                shortenedList.Add(array[i]);
+            }
+        }
+
+        return shortenedList.ToArray();
+    }
+
+    /// <summary>
+    /// Removes the <c>[Selection3D]</c> nonsense if it is present.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    public static T[] RemoveRomRaiderNonsense<T>(this T[] array) {
+        List<T> shortenedList = [];
+
+        for(int i = 0; i < array.Length; i++) {
+            if((array[i]?.ToString() ?? string.Empty).Contains("[Selection3D]")) {
+                continue;
+            }
+            else {
                 shortenedList.Add(array[i]);
             }
         }

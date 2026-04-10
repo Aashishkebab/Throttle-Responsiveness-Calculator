@@ -96,9 +96,14 @@ internal static class Program {
     /// <returns></returns>
     [Pure]
     private static float GetCalculatedValue(float rpm, float requestedTorque) {
+        if(rpm == 0 || requestedTorque == 0) {
+            return 0;
+        }
+
         float finalCalculation;
         finalCalculation = throttle.LookupValueInTable(rpm, requestedTorque);
         finalCalculation += finalCalculation * ((float)Math.Tanh((boost.LookupValueInTable(rpm, finalCalculation) / TANH_DIVISOR)) * (float)TANH_MULTIPLIER); // Divide by 14.7 to get a multiplier related to atmospheric pressure
+        finalCalculation += finalCalculation * EngineTorque.LookupValueInList(rpm);
 
         return finalCalculation;
     }

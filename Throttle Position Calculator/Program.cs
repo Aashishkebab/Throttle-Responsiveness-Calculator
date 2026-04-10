@@ -49,6 +49,7 @@ internal static class Program {
                 pedalCalculation[0][j] = finalCalculation[0][j];
             }
 
+            float maxSensitivity = 0;
             for(int i = 1; i < accelerator.Length; i++) { // Starting at 1 to ignore the headers
                 float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
                 float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
@@ -79,13 +80,14 @@ internal static class Program {
                     rawFinalCalculation[i][j] = finalCalculation[i][j];
                 }
 
-                float maxSensitivity = 0;
                 for(int j = 1; j < finalCalculation[i].Length; j++) { // Calculate max sensitivity
                     if(finalCalculation[i][j] > maxSensitivity) {
                         maxSensitivity = finalCalculation[i][j];
                     }
                 }
+            }
 
+            for(int i = 0; i < finalCalculation.Length; i++) {
                 for(int j = 1; j < finalCalculation[i].Length; j++) { // Normalize values to be out of 100
                     finalCalculation[i][j] = (finalCalculation[i][j] / maxSensitivity) * 100;
                 }

@@ -5,8 +5,7 @@ using static Throttle_Position_Calculator.MathHelper;
 
 namespace Requested_Torque_Calculator;
 
-internal static class Program
-{
+internal static class Program {
     /// <summary>
     /// Table mapping Accelerator Pedal Angle at different RPMs to a Requested Torque value.
     /// </summary>
@@ -14,7 +13,7 @@ internal static class Program
     /// Still required to get the headers.
     /// </remarks>
     private static readonly string[] accelerator = File.ReadAllLines("accelerator.csv").RemoveEmpty();
-    
+
     /// <summary>
     /// Table mapping Accelerator Pedal Angle at different RPMs to an arbitrary torque value (sensitivity).
     /// </summary>
@@ -29,12 +28,12 @@ internal static class Program
     /// Table mapping Throttle Opening Angle at different RPMs to Target Boost.
     /// </summary>
     private static readonly string[] boost = File.ReadAllLines("boost.csv").RemoveEmpty();
-    
+
     /// <summary>
     /// The final calculated "torque" in arbitrary units.
     /// </summary>
     private static readonly float[][] finalCalculation = new float[accelerator.Length][];
-    
+
     public static void Main(string[] args) {
         try {
             finalCalculation[0] = new float[accelerator[0].Split(',').Length];
@@ -54,17 +53,17 @@ internal static class Program
                 }
             }
 
-            for (int i = 1; i < accelerator.Length; i++) {
+            for(int i = 1; i < accelerator.Length; i++) {
                 float[] torqueValuesAtRpm = Array.ConvertAll(accelerator[i].Split(','), float.Parse); // The current row
                 float rpm = torqueValuesAtRpm[0]; // First column is the actual RPM
-                
+
                 finalCalculation[i] = new float[torqueValuesAtRpm.Length]; // Initialize the row in finalCalculation
                 finalCalculation[i][0] = rpm; // Set the first column to the RPM
 
-                for (int j = 1; j < torqueValuesAtRpm.Length; j++) {
+                for(int j = 1; j < torqueValuesAtRpm.Length; j++) {
                     float desiredSensitivity = float.Parse(sensitivity[i].Split(',')[j]);
                     float testValue = 0F;
-                    while (!((GetCalculatedValue(rpm, testValue) / maxSensitivity) * 100).IsAround(desiredSensitivity) && testValue < MAX_REQUESTED_TORQUE) {
+                    while(!((GetCalculatedValue(rpm, testValue) / maxSensitivity) * 100).IsAround(desiredSensitivity) && testValue < MAX_REQUESTED_TORQUE) {
                         testValue += 0.01F;
                     }
 

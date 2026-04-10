@@ -2,8 +2,7 @@
 
 namespace Throttle_Position_Calculator;
 
-internal static class Program
-{
+internal static class Program {
     /// <summary>
     /// Table mapping Accelerator Pedal Angle at different RPMs to a Requested Torque value.
     /// </summary>
@@ -37,13 +36,12 @@ internal static class Program
     /// 2. The leftmost column must be the RPM, sorted ascending.
     /// </summary>
     /// <param name="args"></param>
-    public static void Main(string[] args)
-    {
+    public static void Main(string[] args) {
         try {
             finalCalculation[0] = new float[accelerator[0].Split(',').Length];
             rawFinalCalculation[0] = new float[finalCalculation[0].Length];
             pedalCalculation[0] = new float[finalCalculation[0].Length];
-            
+
             for(int j = 1; j < finalCalculation[0].Length; j++) { // Pre-populate the finalCalculation headers
                 finalCalculation[0][j] = float.Parse(accelerator[0].Split(',')[j]);
                 rawFinalCalculation[0][j] = finalCalculation[0][j];
@@ -72,8 +70,7 @@ internal static class Program
                     finalCalculation[i][j] += finalCalculation[i][j] * ((float)Math.Tanh((boost.LookupValueInTable(rpm, finalCalculation[i][j]) / TANH_DIVISOR)) * (float)TANH_MULTIPLIER);
                     rawFinalCalculation[i][j] = finalCalculation[i][j];
 
-                    if (finalCalculation[i][j] > maxSensitivity)
-                    {
+                    if(finalCalculation[i][j] > maxSensitivity) {
                         maxSensitivity = finalCalculation[i][j];
                     }
                 }
@@ -82,7 +79,7 @@ internal static class Program
                     finalCalculation[i][j] = (finalCalculation[i][j] / maxSensitivity) * 100;
                 }
             }
-            
+
             File.WriteAllLines("pedal_to_throttle.csv", pedalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")));
             File.WriteAllLines("calculated_torque.csv", finalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")));
             File.WriteAllLines("calculated_torque_raw.csv", rawFinalCalculation.Select(row => string.Join(",", row).Replace("-∞", "0")));

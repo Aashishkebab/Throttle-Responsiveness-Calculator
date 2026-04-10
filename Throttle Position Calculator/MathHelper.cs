@@ -6,9 +6,32 @@ using System.Text;
 namespace Throttle_Position_Calculator;
 public static class MathHelper
 {
+    public const float MAX_REQUESTED_TORQUE = 320F;
+
     public const float TANH_DIVISOR = 33F;
     public const float TANH_MULTIPLIER = 2.2F;
-    public const float MAX_REQUESTED_TORQUE = 320F;
+
+    public static SortedList<float, float> EngineTorque {
+        get {
+            return new() {
+                { 800F, 90F },
+                { 1200F, 130F },
+                { 1600F, 145F },
+                { 2000F, 150F },
+                { 2400F, 152F },
+                { 2800F, 155F },
+                { 3200F, 158F },
+                { 3600F, 160F },
+                { 4000F, 162F },
+                { 4400F, 163F },
+                { 4800F, 162F },
+                { 5200F, 160F },
+                { 5600F, 155F },
+                { 6000F, 147F },
+                { 6400F, 135F }
+            };
+        }
+    }
 
     /// <summary>
     /// Gets the Throttle Plate Opening Angle for a given <paramref name="yValue"/> at a specified <paramref name="rpm"/>.
@@ -99,6 +122,39 @@ public static class MathHelper
         }
 
         throw new Exception("The fabric of spacetime is unraveling.");
+    }
+
+    /// <summary>
+    /// Looks up the corresponding value based on the RPM and interpolates if necessary.
+    /// </summary>
+    /// <param name="rpm"></param>
+    /// <returns></returns>
+    public static float LookupValueInList(this SortedList<float, float> list, float rpm) {
+        for(int i = 0; i < list.Count; i++) {
+            if(list.Keys[i] >= rpm) {
+                if(list.Keys[i] == rpm) {
+                    return list.Values[i];
+                }
+                else {
+                    if(i == 0) {
+                        return list.Values[0];
+                    }
+                    else {
+                        float floorRpm = list.Keys[i - 1];
+                        float ceilingRpm = list.Keys[i];
+                        float rpmGap = ceilingRpm - floorRpm;
+
+                        float rpmDistanceFromCeiling = ceilingRpm - rpm;
+                        float rpmPercentageChange = rpmDistanceFromCeiling / rpmGap;
+
+                        float valueGap = list.Values[i] - list.Values[i - 1];
+                        return list.Values[i] - ((valueGap) * rpmPercentageChange);
+                    }
+                }
+            }
+        }
+
+        return list.Values[list.Count - 1];
     }
 
     /// <summary>

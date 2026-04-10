@@ -1,4 +1,5 @@
 ﻿using static Throttle_Position_Calculator.MathHelper;
+using static Throttle_Position_Calculator.Program;
 
 namespace Throttle_Position_Calculator;
 
@@ -59,23 +60,33 @@ internal static class Program {
                 pedalCalculation[i] = new float[torqueValuesAtRpm.Length];
                 pedalCalculation[i][0] = rpm;
 
+                // Calculate the throttle output from the accelerator pedal using the throttle table
                 for(int j = 1; j < finalCalculation[i].Length; j++) { // Starting at 1 to ignore the RPM column
                     finalCalculation[i][j] = throttle.LookupValueInTable(rpm, torqueValuesAtRpm[j]);
                     rawFinalCalculation[i][j] = finalCalculation[i][j];
                     pedalCalculation[i][j] = finalCalculation[i][j];
                 }
 
-                float maxSensitivity = 0;
-                for(int j = 1; j < finalCalculation[i].Length; j++) { // Target Boost
-                    finalCalculation[i][j] += finalCalculation[i][j] * ((float)Math.Tanh((boost.LookupValueInTable(rpm, finalCalculation[i][j]) / TANH_DIVISOR)) * (float)TANH_MULTIPLIER);
+                // Multiply the throttle angles with Target Boost
+                for(int j = 1; j < finalCalculation[i].Length; j++) {
+                    finalCalculation[i][j] += finalCalculation[i][j] * ((float)Math.Tanh((boost.LookupValueInTable(rpm, finalCalculation[i][j]) / TANH_DIVISOR)) * (float)TANH_MULTIPLIER); // Account for boost efficiency
                     rawFinalCalculation[i][j] = finalCalculation[i][j];
+                }
 
+                // Multiple the sensitivity/torque values with a relatively standard engine torque curve
+                for(int j = 1; j < finalCalculation[i].Length; j++) {
+                    finalCalculation[i][j] += finalCalculation[i][j] * EngineTorque.LookupValueInList(rpm);
+                    rawFinalCalculation[i][j] = finalCalculation[i][j];
+                }
+
+                float maxSensitivity = 0;
+                for(int j = 1; j < finalCalculation[i].Length; j++) { // Calculate max sensitivity
                     if(finalCalculation[i][j] > maxSensitivity) {
                         maxSensitivity = finalCalculation[i][j];
                     }
                 }
 
-                for(int j = 1; j < finalCalculation[i].Length; j++) {
+                for(int j = 1; j < finalCalculation[i].Length; j++) { // Normalize values to be out of 100
                     finalCalculation[i][j] = (finalCalculation[i][j] / maxSensitivity) * 100;
                 }
             }

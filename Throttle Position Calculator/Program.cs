@@ -87,7 +87,7 @@ internal static class Program {
                 }
             }
 
-            for(int i = 0; i < finalCalculation.Length; i++) {
+            for(int i = 1; i < finalCalculation.Length; i++) {
                 for(int j = 1; j < finalCalculation[i].Length; j++) { // Normalize values to be out of 100
                     finalCalculation[i][j] = (finalCalculation[i][j] / maxSensitivity) * 100;
                 }

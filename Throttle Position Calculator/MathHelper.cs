@@ -14,6 +14,7 @@ public static class MathHelper
     public static SortedList<float, float> EngineTorque {
         get {
             return new() {
+                { 0F, 0F },
                 { 800F, 90F },
                 { 1200F, 130F },
                 { 1600F, 145F },
@@ -42,6 +43,10 @@ public static class MathHelper
     /// <returns></returns>
     [Pure]
     public static float LookupValueInTable(this string[] values, float rpm, float yValue) {
+        if(rpm == 0 || yValue == 0) {
+            return 0;
+        }
+
         float[] tableHeaders = Array.ConvertAll(values[0].Split(','), theValue => string.IsNullOrWhiteSpace(theValue) ? -1 : float.Parse(theValue));
         float[] rpmList = values.Select(line => float.Parse(string.IsNullOrWhiteSpace(line.Split(',')[0]) ? "-1" : line.Split(',')[0])).ToArray();
         

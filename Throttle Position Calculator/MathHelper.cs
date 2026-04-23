@@ -16,8 +16,8 @@ public static class MathHelper
             return new() {
                 { 0F, 0F },
                 { 800F, 90F },
-                { 1200F, 130F },
-                { 1600F, 145F },
+                { 1200F, 120F },
+                { 1600F, 137F },
                 { 2000F, 150F },
                 { 2400F, 152F },
                 { 2800F, 155F },

@@ -64,7 +64,7 @@ internal static class Program {
                     float desiredSensitivity = float.Parse(sensitivity[i].Split(',')[j]);
                     float testValue = 0F;
                     while(!((GetCalculatedValue(rpm, testValue) / maxSensitivity) * 100).IsAround(desiredSensitivity) && testValue < MAX_REQUESTED_TORQUE) {
-                        testValue += 0.01F;
+                        testValue += 0.005F;
                     }
 
                     if(testValue.IsAround(MAX_REQUESTED_TORQUE, 1.5F)) {

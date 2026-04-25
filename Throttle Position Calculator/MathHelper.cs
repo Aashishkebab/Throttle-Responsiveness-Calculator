@@ -170,7 +170,7 @@ public static class MathHelper
     /// <param name="leeway"></param>
     /// <returns></returns>
     [Pure]
-    public static bool IsAround(this float float1, float float2, float leeway = 0.5F) {
+    public static bool IsAround(this float float1, float float2, float leeway = 0.05F) {
         return Math.Abs(float1 - float2) < leeway;
     }
     

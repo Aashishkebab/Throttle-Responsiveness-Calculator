@@ -1,4 +1,4 @@
-# Throttle-Responsiveness-Calculator
+# Throttle Responsiveness Calculator
 Uses Requested Torque values (accelerator pedal) and combines them with Throttle Opening Angle and Target Boost to create the expected Torque (in arbitrary units), accounting for natural engine torque curves and turbocharger inefficiency at high boost.
 
 # Requested Torque Calculator 

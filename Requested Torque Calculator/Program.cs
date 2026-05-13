@@ -117,6 +117,9 @@ internal static class Program {
         if(desiredSensitivity == 0) {
             return 0;
         }
+        if(desiredSensitivity == 100) {
+            return MAX_REQUESTED_TORQUE;
+        }
 
         // Un-normalize
         float targetRaw = desiredSensitivity * maxSensitivity / 100f;
@@ -127,13 +130,10 @@ internal static class Program {
         // Reverse pressure ratio to MAP
         float map;
         if(pressureRatio < 1f) {
-            map = (pressureRatio * MAXIMUM_VACUUM) - MAXIMUM_VACUUM;
+            map = (pressureRatio * 14.7f) - MAXIMUM_VACUUM;
         }
         else {
             float tanhInput = (pressureRatio - 1f) / TANH_MULTIPLIER;
-            if(tanhInput >= 1f) {
-                tanhInput = 0.9999f; // atanh is undefined at 1
-            }
             map = TANH_DIVISOR * (float)Math.Atanh(tanhInput);
         }
 

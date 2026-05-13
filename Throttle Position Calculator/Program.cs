@@ -17,7 +17,9 @@ internal static class Program {
     /// <summary>
     /// Table mapping Throttle Opening Angle at different RPMs to Target Boost.
     /// </summary>
-    private static readonly string[] boost = File.ReadAllLines("boost.csv").RemoveEmpty();
+    private static readonly string[] manifoldPressure = File.ReadAllLines("map.csv").RemoveEmpty();
+    //private static readonly float maximumVacuum = Math.Abs(manifoldPressure.Skip(1).Select(line => float.Parse(line.Split(',')[1])).Min());
+    private const float MAXIMUM_VACUUM = 14.7f;
 
     /// <summary>
     /// The final calculated "torque" in arbitrary units.
@@ -63,15 +65,22 @@ internal static class Program {
 
                 // Calculate the throttle output from the accelerator pedal using the throttle table
                 for(int j = 1; j < finalCalculation[i].Length; j++) { // Starting at 1 to ignore the RPM column
-                    finalCalculation[i][j] = throttle.LookupValueInTable(rpm, torqueValuesAtRpm[j]);
-                    rawFinalCalculation[i][j] = finalCalculation[i][j];
-                    pedalCalculation[i][j] = finalCalculation[i][j];
+                    //finalCalculation[i][j] = throttle.LookupValueInTable(rpm, torqueValuesAtRpm[j]);
+                    //rawFinalCalculation[i][j] = finalCalculation[i][j];
+                    pedalCalculation[i][j] = throttle.LookupValueInTable(rpm, torqueValuesAtRpm[j]);
                 }
 
-                // Multiply the throttle angles with Target Boost
+                // Use MAP (boost) as baseline
                 for(int j = 1; j < finalCalculation[i].Length; j++) {
-                    finalCalculation[i][j] += finalCalculation[i][j] * ((float)Math.Tanh((boost.LookupValueInTable(rpm, finalCalculation[i][j]) / TANH_DIVISOR)) * (float)TANH_MULTIPLIER); // Account for boost efficiency
-                    rawFinalCalculation[i][j] = finalCalculation[i][j];
+                    if(torqueValuesAtRpm[j] == 0) {
+                        finalCalculation[i][j] = 0;
+                        rawFinalCalculation[i][j] = finalCalculation[i][j];
+                    }
+                    else {
+                        float mapCalculation = manifoldPressure.LookupValueInTable(rpm, throttle.LookupValueInTable(rpm, torqueValuesAtRpm[j]));
+                        finalCalculation[i][j] = mapCalculation > 0 ? 1f + (float)Math.Tanh(mapCalculation / TANH_DIVISOR) * TANH_MULTIPLIER : (MAXIMUM_VACUUM + mapCalculation) / MAXIMUM_VACUUM; // Account for boost efficiency
+                        rawFinalCalculation[i][j] = finalCalculation[i][j];
+                    }
                 }
 
                 // Multiple the sensitivity/torque values with a relatively standard engine torque curve

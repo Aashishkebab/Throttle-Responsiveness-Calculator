@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.Contracts;
-using System.Runtime.Intrinsics.Arm;
 
 using static Throttle_Position_Calculator.MathHelper;
 
@@ -27,7 +26,9 @@ internal static class Program {
     /// <summary>
     /// Table mapping Throttle Opening Angle at different RPMs to Target Boost.
     /// </summary>
-    private static readonly string[] boost = File.ReadAllLines("boost.csv").RemoveEmpty();
+    private static readonly string[] manifoldPressure = File.ReadAllLines("map.csv").RemoveEmpty();
+
+    private const float MAXIMUM_VACUUM = 14.7f;
 
     /// <summary>
     /// The final calculated "torque" in arbitrary units.
@@ -62,16 +63,14 @@ internal static class Program {
 
                 for(int j = 1; j < torqueValuesAtRpm.Length; j++) {
                     float desiredSensitivity = float.Parse(sensitivity[i].Split(',')[j]);
-                    float testValue = 0F;
-                    while(!((GetCalculatedValue(rpm, testValue) / maxSensitivity) * 100).IsAround(desiredSensitivity) && testValue < MAX_REQUESTED_TORQUE) {
-                        testValue += 0.005F;
+                    float requestedTorque = GetRequestedTorque(rpm, desiredSensitivity, maxSensitivity);
+
+                    if(requestedTorque > MAX_REQUESTED_TORQUE) {
+                        requestedTorque = MAX_REQUESTED_TORQUE;
                     }
 
-                    if(testValue.IsAround(MAX_REQUESTED_TORQUE, 1.5F)) {
-                        testValue = MAX_REQUESTED_TORQUE;
-                    }
-                    finalCalculation[i][j] = testValue;
-                    Console.WriteLine($"Calculated value {testValue} for RPM {rpm}");
+                    finalCalculation[i][j] = requestedTorque;
+                    Console.WriteLine($"Calculated value {requestedTorque} for RPM {rpm}");
                 }
             }
 
@@ -101,11 +100,49 @@ internal static class Program {
         }
 
         float finalCalculation;
-        finalCalculation = throttle.LookupValueInTable(rpm, requestedTorque);
-        finalCalculation += finalCalculation * ((float)Math.Tanh((boost.LookupValueInTable(rpm, finalCalculation) / TANH_DIVISOR)) * (float)TANH_MULTIPLIER); // Divide by 14.7 to get a multiplier related to atmospheric pressure
+
+        float mapCalculation = manifoldPressure.LookupValueInTable(rpm, throttle.LookupValueInTable(rpm, requestedTorque));
+        finalCalculation = (mapCalculation > 0 ? 1f + (float)Math.Tanh(mapCalculation / TANH_DIVISOR) * TANH_MULTIPLIER : (MAXIMUM_VACUUM + mapCalculation) / MAXIMUM_VACUUM);
+
         finalCalculation += finalCalculation * EngineTorque.LookupValueInList(rpm);
 
         return finalCalculation;
     }
-}
 
+    /// <summary>
+    /// Reverses <see cref="GetCalculatedValue"/> to find the requested torque that produces the desired sensitivity.
+    /// </summary>
+    [Pure]
+    private static float GetRequestedTorque(float rpm, float desiredSensitivity, float maxSensitivity) {
+        if(desiredSensitivity == 0) {
+            return 0;
+        }
+
+        // Un-normalize
+        float targetRaw = desiredSensitivity * maxSensitivity / 100f;
+
+        // Remove engine torque multiplier
+        float pressureRatio = targetRaw / (1f + EngineTorque.LookupValueInList(rpm));
+
+        // Reverse pressure ratio to MAP
+        float map;
+        if(pressureRatio < 1f) {
+            map = (pressureRatio * MAXIMUM_VACUUM) - MAXIMUM_VACUUM;
+        }
+        else {
+            float tanhInput = (pressureRatio - 1f) / TANH_MULTIPLIER;
+            if(tanhInput >= 1f) {
+                tanhInput = 0.9999f; // atanh is undefined at 1
+            }
+            map = TANH_DIVISOR * (float)Math.Atanh(tanhInput);
+        }
+
+        // Reverse-lookup MAP in manifold pressure table to get throttle angle
+        float throttleAngle = manifoldPressure.LookupHeaderInTable(rpm, map);
+
+        // Reverse-lookup throttle angle in throttle table to get requested torque
+        float requestedTorque = throttle.LookupHeaderInTable(rpm, throttleAngle);
+
+        return requestedTorque;
+    }
+}

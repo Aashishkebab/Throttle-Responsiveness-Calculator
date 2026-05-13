@@ -35,15 +35,15 @@ public static class MathHelper
     }
 
     /// <summary>
-    /// Gets the Throttle Plate Opening Angle for a given <paramref name="yValue"/> at a specified <paramref name="rpm"/>.
+    /// Gets the corresponding cell value for a given <paramref name="xValue"/> at a specified <paramref name="rpm"/>.
     /// </summary>
-    /// <param name="yValue"></param>
+    /// <param name="xValue"></param>
     /// <param name="values"></param>
     /// <param name="rpm"></param>
     /// <returns></returns>
     [Pure]
-    public static float LookupValueInTable(this string[] values, float rpm, float yValue) {
-        if(rpm == 0 || yValue == 0) {
+    public static float LookupValueInTable(this string[] values, float rpm, float xValue) {
+        if(rpm == 0 || xValue == 0) {
             return 0;
         }
 
@@ -53,7 +53,7 @@ public static class MathHelper
         for(int i = 1; i < rpmList.Length; i++) {
             if(rpmList[i] >= rpm || i == rpmList.Length - 1) { // We have found the matching y columns
                 for(int j = 1; j < tableHeaders.Length; j++) { // Starting at 1 to ignore the blank column
-                    if(tableHeaders[j] >= yValue || j == tableHeaders.Length - 1) { // We have found the matching x columns
+                    if(tableHeaders[j] >= xValue || j == tableHeaders.Length - 1) { // We have found the matching x columns
                         // Get the four values
                         float rpmCeilingValueCeiling = float.Parse(values[i].Split(',')[j]);
                         
@@ -100,11 +100,11 @@ public static class MathHelper
                         }
 
                         // Get the percentage change in yValue from closest floor in the table
-                        float distanceFromCeilingValue = tableHeaders[j] - yValue;
+                        float distanceFromCeilingValue = tableHeaders[j] - xValue;
                         float totalValueGap = tableHeaders[j] - tableHeaders[j - 1];
 
                         float valuePercentageChangeFromCeiling;
-                        if(totalValueGap == 0 || (j == tableHeaders.Length - 1 && yValue > tableHeaders[j])) {
+                        if(totalValueGap == 0 || (j == tableHeaders.Length - 1 && xValue > tableHeaders[j])) {
                             valuePercentageChangeFromCeiling = 0;
                         }
                         else {
@@ -121,6 +121,77 @@ public static class MathHelper
 
                         // Calculate the final interpolated throttle position using the two RPM-based values
                         return rpmCeilingFinalValue - ((rpmCeilingFinalValue - rpmFloorFinalValue) * rpmPercentageChangeFromCeiling);
+                    }
+                }
+            }
+        }
+
+        throw new Exception("The fabric of spacetime is unraveling.");
+    }
+
+    /// <summary>
+    /// Finds the correct header value for the given <paramref name="rpm"/> and the <paramref name="cellValue"/>.
+    /// </summary>
+    /// <param name="values"></param>
+    /// <param name="rpm"></param>
+    /// <param name="cellValue"></param>
+    /// <returns></returns>
+    [Pure]
+    public static float LookupHeaderInTable(this string[] values, float rpm, float cellValue) {
+        if(rpm == 0 || cellValue == 0) {
+            return 0;
+        }
+
+        float[] tableHeaders = Array.ConvertAll(values[0].Split(','), theValue => string.IsNullOrWhiteSpace(theValue) ? -1 : float.Parse(theValue));
+        float[] rpmList = values.Select(line => float.Parse(string.IsNullOrWhiteSpace(line.Split(',')[0]) ? "-1" : line.Split(',')[0])).ToArray();
+
+        for(int i = 1; i < rpmList.Length; i++) {
+            if(rpmList[i] >= rpm || i == rpmList.Length - 1) { // We have found the matching RPM rows
+
+                // Get the percentage change in RPM from closest ceiling
+                float distanceFromRpmCeiling = rpmList[i] - rpm;
+                float totalRpmGap = rpmList[i] - rpmList[i - 1];
+
+                float rpmPercentageChangeFromCeiling;
+                if(totalRpmGap == 0 || (i == rpmList.Length - 1 && rpm > rpmList[i])) {
+                    rpmPercentageChangeFromCeiling = 0;
+                }
+                else {
+                    rpmPercentageChangeFromCeiling = distanceFromRpmCeiling / totalRpmGap;
+                }
+
+                // Build the interpolated row for this RPM
+                float[] interpolatedRow = new float[tableHeaders.Length];
+                for(int j = 1; j < tableHeaders.Length; j++) {
+                    float ceilingValue = float.Parse(values[i].Split(',')[j]);
+                    float floorValue;
+                    if(i == 1) {
+                        floorValue = ceilingValue;
+                    }
+                    else {
+                        floorValue = float.Parse(values[i - 1].Split(',')[j]);
+                    }
+                    interpolatedRow[j] = ceilingValue - ((ceilingValue - floorValue) * rpmPercentageChangeFromCeiling);
+                }
+
+                // Search the interpolated row for where targetValue falls
+                for(int j = 2; j < interpolatedRow.Length; j++) { // Starting at 2 because we need j-1 to be a valid data column
+                    if(interpolatedRow[j] >= cellValue || j == interpolatedRow.Length - 1) {
+                        float previousCellValue = interpolatedRow[j - 1];
+                        float nextCellValue = interpolatedRow[j];
+                        float cellGap = nextCellValue - previousCellValue;
+
+                        float percentage;
+                        if(cellGap == 0 || (j == interpolatedRow.Length - 1 && cellValue > interpolatedRow[j])) {
+                            percentage = 0;
+                        }
+                        else {
+                            percentage = (nextCellValue - cellValue) / cellGap;
+                        }
+
+                        float previousHeader = tableHeaders[j - 1];
+                        float nextHeader = tableHeaders[j];
+                        return nextHeader - ((nextHeader - previousHeader) * percentage);
                     }
                 }
             }
@@ -170,7 +241,7 @@ public static class MathHelper
     /// <param name="leeway"></param>
     /// <returns></returns>
     [Pure]
-    public static bool IsAround(this float float1, float float2, float leeway = 0.05F) {
+    public static bool IsAround(this float float1, float float2, float leeway = 0.005F) {
         return Math.Abs(float1 - float2) < leeway;
     }
     

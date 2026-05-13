@@ -134,6 +134,9 @@ internal static class Program {
         }
         else {
             float tanhInput = (pressureRatio - 1f) / TANH_MULTIPLIER;
+            if(tanhInput >= 1f) {
+                tanhInput = 0.9999f; // atanh is undefined at 1
+            }
             map = TANH_DIVISOR * (float)Math.Atanh(tanhInput);
         }
 
